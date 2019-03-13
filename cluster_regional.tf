@@ -127,6 +127,11 @@ resource "google_container_node_pool" "pools" {
     oauth_scopes = [
       "https://www.googleapis.com/auth/cloud-platform",
     ]
+
+    guest_accelerator {
+      type  = "${lookup(var.node_pools[count.index], "guest_accelerator_type", "")}"
+      count = "${lookup(var.node_pools[count.index], "guest_accelerator_count", 0)}"
+    }
   }
 
   lifecycle {
