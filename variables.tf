@@ -135,6 +135,16 @@ variable "node_pools" {
   ]
 }
 
+variable "node_pools_accelerators" {
+  type        = "map"
+  description = "Map of lists containing node guest accelerators by node-pool name"
+
+  default = {
+    all               = []
+    default-node-pool = []
+  }
+}
+
 variable "node_pools_labels" {
   type        = "map"
   description = "Map of maps containing node labels by node-pool name"

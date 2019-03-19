@@ -127,10 +127,7 @@ resource "google_container_node_pool" "zonal_pools" {
       "https://www.googleapis.com/auth/cloud-platform",
     ]
 
-    guest_accelerator {
-      type  = "${lookup(var.node_pools[count.index], "guest_accelerator_type", "")}"
-      count = "${lookup(var.node_pools[count.index], "guest_accelerator_count", 0)}"
-    }
+    guest_accelerator = "${var.node_pools_accelerators[lookup(var.node_pools[count.index], "name")]}"
   }
 
   lifecycle {
