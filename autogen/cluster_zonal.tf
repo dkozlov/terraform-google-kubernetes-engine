@@ -27,7 +27,7 @@ resource "google_container_cluster" "zonal_primary" {
   project     = "${var.project_id}"
 
   zone             = "${var.zones[0]}"
-  additional_zones = ["${slice(var.zones,1,length(var.zones))}"]
+  node_locations   = ["${slice(var.zones,1,length(var.zones))}"]
 
   network            = "${replace(data.google_compute_network.gke_network.self_link, "https://www.googleapis.com/compute/v1/", "")}"
   subnetwork         = "${replace(data.google_compute_subnetwork.gke_subnetwork.self_link, "https://www.googleapis.com/compute/v1/", "")}"
@@ -103,7 +103,7 @@ resource "google_container_node_pool" "zonal_pools" {
   name               = "${lookup(var.node_pools[count.index], "name")}"
   project            = "${var.project_id}"
   zone               = "${var.zones[0]}"
-  cluster            = "${var.name}"
+  cluster            = "${google_container_cluster.zonal_primary.name}"
   version            = "${lookup(var.node_pools[count.index], "auto_upgrade", false) ? "" : lookup(var.node_pools[count.index], "version", local.node_version_zonal)}"
   initial_node_count = "${lookup(var.node_pools[count.index], "initial_node_count", lookup(var.node_pools[count.index], "min_count", 1))}"
 
@@ -144,8 +144,6 @@ resource "google_container_node_pool" "zonal_pools" {
     update = "30m"
     delete = "30m"
   }
-
-  depends_on = ["google_container_cluster.zonal_primary"]
 }
 
 resource "null_resource" "wait_for_zonal_cluster" {
