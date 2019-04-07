@@ -56,10 +56,10 @@ resource "google_container_cluster" "zonal_primary" {
     }
   }
 
-  ip_allocation_policy {
-    cluster_secondary_range_name  = "${var.ip_range_pods}"
-    services_secondary_range_name = "${var.ip_range_services}"
-  }
+  #ip_allocation_policy {
+  #  cluster_secondary_range_name  = "${var.ip_range_pods}"
+  #  services_secondary_range_name = "${var.ip_range_services}"
+  #}
 
   maintenance_policy {
     daily_maintenance_window {
