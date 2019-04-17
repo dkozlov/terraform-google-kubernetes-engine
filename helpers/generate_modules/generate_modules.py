@@ -54,6 +54,7 @@ DEVNULL_FILE = open(os.devnull, 'w')
 
 def main(argv):
     env = Environment(
+        keep_trailing_newline=True,
         loader=FileSystemLoader(TEMPLATE_FOLDER),
         trim_blocks=True,
         lstrip_blocks=True,
@@ -66,7 +67,7 @@ def main(argv):
                 module.template_options(BASE_TEMPLATE_OPTIONS)
             )
             with open(os.path.join(module.path, template_file), "w") as f:
-                f.write(rendered.rstrip())
+                f.write(rendered)
                 if template_file.endswith(".tf"):
                     subprocess.call(
                         [
