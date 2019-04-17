@@ -94,7 +94,7 @@ resource "google_container_cluster" "primary" {
     }
   }
 
-  remove_default_node_pool = "${var.remove_default_node_pool}"
+  #remove_default_node_pool = "${var.remove_default_node_pool}"
 }
 
 /******************************************
