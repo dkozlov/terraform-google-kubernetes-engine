@@ -139,10 +139,7 @@ resource "google_container_node_pool" "pools" {
       var.node_pools_oauth_scopes[lookup(var.node_pools[count.index], "name")])}",
     ]
 
-    guest_accelerator {
-      type  = "${lookup(var.node_pools[count.index], "accelerator_type", "")}"
-      count = "${lookup(var.node_pools[count.index], "accelerator_count", 0)}"
-    }
+    guest_accelerator = "${var.node_pools_accelerators[lookup(var.node_pools[count.index], "name")]}"
   }
 
   lifecycle {
