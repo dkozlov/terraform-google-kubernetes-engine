@@ -87,7 +87,8 @@ resource "google_container_cluster" "primary" {
   }
 
   node_pool {
-    name = "default-pool"
+    name               = "default-pool"
+    initial_node_count = "${var.initial_node_count}"
 
     node_config {
       service_account = "${lookup(var.node_pools[0], "service_account", local.service_account)}"
@@ -138,7 +139,10 @@ resource "google_container_node_pool" "pools" {
       var.node_pools_oauth_scopes[lookup(var.node_pools[count.index], "name")])}",
     ]
 
-    guest_accelerator = "${var.node_pools_accelerators[lookup(var.node_pools[count.index], "name")]}"
+    guest_accelerator {
+      type  = "${lookup(var.node_pools[count.index], "accelerator_type", "")}"
+      count = "${lookup(var.node_pools[count.index], "accelerator_count", 0)}"
+    }
   }
 
   lifecycle {

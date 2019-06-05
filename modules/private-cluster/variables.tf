@@ -119,6 +119,11 @@ variable "ip_range_services" {
   description = "The _name_ of the secondary subnet range to use for services"
 }
 
+variable "initial_node_count" {
+  description = "The number of nodes to create in this cluster's default node pool."
+  default     = 0
+}
+
 variable "remove_default_node_pool" {
   description = "Remove default node pool while setting up the cluster"
   default     = false
@@ -225,6 +230,11 @@ variable "monitoring_service" {
 variable "service_account" {
   description = "The service account to run nodes as if not overridden in `node_pools`. The default value will cause a cluster-specific service account to be created."
   default     = "create"
+}
+
+variable "deploy_using_private_endpoint" {
+  description = "(Beta) A toggle for Terraform and kubectl to connect to the master's internal IP address during deployment."
+  default     = "false"
 }
 
 variable "enable_private_endpoint" {

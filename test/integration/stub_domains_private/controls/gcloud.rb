@@ -12,15 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-project_id = attribute('project_id')
-location = attribute('location')
-cluster_name = attribute('cluster_name')
-
 control "gcloud" do
   title "Google Compute Engine GKE configuration"
-  describe command("gcloud --project=#{project_id} container clusters --zone=#{location} describe #{cluster_name} --format=json") do
+  describe command(
+    "gcloud --project=#{attribute("project_id")} container clusters --zone=#{attribute("location")} describe " \
+    "#{attribute("cluster_name")} --format=json"
+  ) do
     its(:exit_status) { should eq 0 }
-    its(:stderr) { should eq '' }
+    its(:stderr) { should eq "" }
 
     let!(:data) do
       if subject.exit_status == 0
@@ -32,21 +31,26 @@ control "gcloud" do
 
     describe "cluster" do
       it "is running" do
-        expect(data['status']).to eq 'RUNNING'
+        expect(data["status"]).to eq "RUNNING"
       end
 
-      it "does not have a client certificate" do
-        expect(data['masterAuth']['clientCertificate']).to be_nil
+      it "does not use the private endpoint" do
+        expect(data["privateClusterConfig"]["enablePrivateEndpoint"]).to eq false
       end
 
-      describe "does not have a basic auth enabled" do
-        it "username is nil" do
-          expect(data['masterAuth']['username']).to be_nil
-        end
+      it "uses private nodes" do
+        expect(data["privateClusterConfig"]["enablePrivateNodes"]).to eq true
+      end
 
-        it "password is nil" do
-          expect(data['masterAuth']['password']).to be_nil
-        end
+      it "has the expected addon settings" do
+        expect(data["addonsConfig"]).to eq({
+          "horizontalPodAutoscaling" => {},
+          "httpLoadBalancing" => {},
+          "kubernetesDashboard" => {
+            "disabled" => true,
+          },
+          "networkPolicyConfig" => {},
+        })
       end
     end
   end

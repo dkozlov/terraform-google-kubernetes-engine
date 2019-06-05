@@ -20,6 +20,10 @@ driver:
 provisioner:
   name: "terraform"
 
+verifier:
+  name: terraform
+  color: false
+
 platforms:
   - name: local
 
@@ -35,6 +39,9 @@ suites:
       systems:
         - name: deploy_service
           backend: local
+    lifecycle:
+      pre_verify:
+        - sleep 10
     provisioner:
       name: terraform
   - name: "disable_client_cert"
@@ -147,3 +154,9 @@ suites:
           backend: local
     provisioner:
       name: terraform
+  - name: stub_domains_private
+    driver:
+      root_module_directory: test/fixtures/stub_domains_private
+      systems:
+        - name: stub_domains_private
+          backend: local
