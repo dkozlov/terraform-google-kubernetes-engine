@@ -73,18 +73,13 @@ control "kubectl" do
         end
 
         it "has the expected taints" do
-          expect(taints).to eq([
+          expect(taints).to include(
             {
               effect: "PreferNoSchedule",
               key: "all-pools-example",
               value: "true",
-            },
-            {
-              effect: "NoSchedule",
-              key: "nvidia.com/gpu",
-              value: "present",
-            },
-          ])
+            }
+          )
         end
       end
     end
