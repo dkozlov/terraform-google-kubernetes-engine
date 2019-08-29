@@ -45,7 +45,7 @@ output "endpoint" {
   sensitive   = true
   description = "Cluster endpoint"
   value       = local.cluster_endpoint
-  depends_on  = [
+  depends_on = [
     /* Nominally, the endpoint is populated as soon as it is known to Terraform.
     * However, the cluster may not be in a usable state yet.  Therefore any
     * resources dependent on the cluster being up will fail to deploy.  With
@@ -54,8 +54,6 @@ output "endpoint" {
     */
     google_container_cluster.primary,
     google_container_node_pool.pools,
-    google_container_cluster.zonal_primary,
-    google_container_node_pool.zonal_pools,
   ]
 }
 

@@ -17,19 +17,18 @@
 // This file was automatically generated from a template in ./autogen
 
 /******************************************
-  Create zonal cluster
+  Create Container Cluster
  *****************************************/
-resource "google_container_cluster" "zonal_primary" {
+resource "google_container_cluster" "primary" {
   provider = google-beta
 
-  count           = var.regional ? 0 : 1
   name            = var.name
   description     = var.description
   project         = var.project_id
   resource_labels = var.cluster_resource_labels
 
-  zone              = var.zones[0]
-  node_locations    = slice(var.zones, 1, length(var.zones))
+  location          = local.location
+  node_locations    = local.node_locations
   cluster_ipv4_cidr = var.cluster_ipv4_cidr
   network           = data.google_compute_network.gke_network.self_link
 
@@ -43,13 +42,14 @@ resource "google_container_cluster" "zonal_primary" {
   }
 
   subnetwork         = data.google_compute_subnetwork.gke_subnetwork.self_link
-  min_master_version = local.kubernetes_version_zonal
+  min_master_version = local.master_version
 
   logging_service    = var.logging_service
   monitoring_service = var.monitoring_service
 
   enable_binary_authorization = var.enable_binary_authorization
   enable_intranode_visibility = var.enable_intranode_visibility
+  default_max_pods_per_node   = var.default_max_pods_per_node
 
   vertical_pod_autoscaling {
     enabled = var.enable_vertical_pod_autoscaling
@@ -62,6 +62,15 @@ resource "google_container_cluster" "zonal_primary" {
     }
   }
 
+  dynamic "resource_usage_export_config" {
+    for_each = var.resource_usage_export_dataset_id != "" ? [var.resource_usage_export_dataset_id] : []
+    content {
+      enable_network_egress_metering = true
+      bigquery_destination {
+        dataset_id = resource_usage_export_config.value
+      }
+    }
+  }
   dynamic "master_authorized_networks_config" {
     for_each = var.master_authorized_networks_config
     content {
@@ -149,14 +158,17 @@ resource "google_container_cluster" "zonal_primary" {
           node_metadata = workload_metadata_config.value.node_metadata
         }
       }
+
+      dynamic "sandbox_config" {
+        for_each = local.cluster_sandbox_enabled
+
+        content {
+          sandbox_type = sandbox_config.value
+        }
+      }
     }
   }
 
-  private_cluster_config {
-    enable_private_endpoint = var.enable_private_endpoint
-    enable_private_nodes    = var.enable_private_nodes
-    master_ipv4_cidr_block  = var.master_ipv4_cidr_block
-  }
 
   remove_default_node_pool = var.remove_default_node_pool
 
@@ -168,37 +180,58 @@ resource "google_container_cluster" "zonal_primary" {
       state    = database_encryption.value.state
     }
   }
+
+  dynamic "workload_identity_config" {
+    for_each = local.cluster_workload_identity_config
+
+    content {
+      identity_namespace = workload_identity_config.value.identity_namespace
+    }
+  }
+
+  dynamic "authenticator_groups_config" {
+    for_each = local.cluster_authenticator_security_group
+    content {
+      security_group = authenticator_groups_config.value.security_group
+    }
+  }
 }
 
 /******************************************
-  Create zonal node pools
+  Create Container Cluster node pools
  *****************************************/
-resource "google_container_node_pool" "zonal_pools" {
+resource "google_container_node_pool" "pools" {
   provider = google-beta
-  count    = var.regional ? 0 : length(var.node_pools)
+  count    = length(var.node_pools)
   name     = var.node_pools[count.index]["name"]
   project  = var.project_id
-  zone     = var.zones[0]
-  cluster  = google_container_cluster.zonal_primary[0].name
+  location = local.location
+  cluster  = google_container_cluster.primary.name
   version = lookup(var.node_pools[count.index], "auto_upgrade", false) ? "" : lookup(
     var.node_pools[count.index],
     "version",
-    local.node_version_zonal,
+    local.node_version,
   )
   initial_node_count = lookup(
     var.node_pools[count.index],
     "initial_node_count",
     lookup(var.node_pools[count.index], "min_count", 1),
   )
+  max_pods_per_node = lookup(var.node_pools[count.index], "max_pods_per_node", null)
 
-  autoscaling {
-    min_node_count = lookup(var.node_pools[count.index], "min_count", 1)
-    max_node_count = lookup(var.node_pools[count.index], "max_count", 100)
+  node_count = lookup(var.node_pools[count.index], "autoscaling", true) ? null : lookup(var.node_pools[count.index], "min_count", 1)
+
+  dynamic "autoscaling" {
+    for_each = lookup(var.node_pools[count.index], "autoscaling", true) ? [var.node_pools[count.index]] : []
+    content {
+      min_node_count = lookup(autoscaling.value, "min_count", 1)
+      max_node_count = lookup(autoscaling.value, "max_count", 100)
+    }
   }
 
   management {
     auto_repair  = lookup(var.node_pools[count.index], "auto_repair", true)
-    auto_upgrade = lookup(var.node_pools[count.index], "auto_upgrade", false)
+    auto_upgrade = lookup(var.node_pools[count.index], "auto_upgrade", local.default_auto_upgrade)
   }
 
   node_config {
@@ -238,7 +271,6 @@ resource "google_container_node_pool" "zonal_pools" {
         value  = taint.value.value
       }
     }
-
     tags = concat(
       ["gke-${var.name}"],
       ["gke-${var.name}-${var.node_pools[count.index]["name"]}"],
@@ -290,8 +322,7 @@ resource "google_container_node_pool" "zonal_pools" {
   }
 }
 
-resource "null_resource" "wait_for_zonal_cluster" {
-  count = var.regional ? 0 : 1
+resource "null_resource" "wait_for_cluster" {
 
   provisioner "local-exec" {
     command = "${path.module}/scripts/wait-for-cluster.sh ${var.project_id} ${var.name}"
@@ -303,7 +334,7 @@ resource "null_resource" "wait_for_zonal_cluster" {
   }
 
   depends_on = [
-    google_container_cluster.zonal_primary,
-    google_container_node_pool.zonal_pools,
+    google_container_cluster.primary,
+    google_container_node_pool.pools,
   ]
 }

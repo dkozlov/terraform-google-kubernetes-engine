@@ -19,12 +19,7 @@ locals {
 }
 
 provider "google" {
-  version = "~> 2.9.0"
-  region  = var.region
-}
-
-provider "google-beta" {
-  version = "~> 2.9.0"
+  version = "~> 2.12.0"
   region  = var.region
 }
 

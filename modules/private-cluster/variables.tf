@@ -178,16 +178,6 @@ variable "node_pools_metadata" {
   }
 }
 
-variable "node_pools_taints" {
-  type        = map(list(object({ key = string, value = string, effect = string })))
-  description = "Map of lists containing node taints by node-pool name"
-
-  default = {
-    all               = []
-    default-node-pool = []
-  }
-}
-
 variable "node_pools_tags" {
   type        = map(list(string))
   description = "Map of lists containing node network tags by node-pool name"
@@ -255,10 +245,22 @@ variable "monitoring_service" {
   default     = "monitoring.googleapis.com"
 }
 
+variable "create_service_account" {
+  type        = bool
+  description = "Defines if service account specified to run nodes should be created."
+  default     = true
+}
+
+variable "grant_registry_access" {
+  type        = bool
+  description = "Grants created cluster-specific service account storage.objectViewer role."
+  default     = false
+}
+
 variable "service_account" {
   type        = string
-  description = "The service account to run nodes as if not overridden in `node_pools`. The default value will cause a cluster-specific service account to be created."
-  default     = "create"
+  description = "The service account to run nodes as if not overridden in `node_pools`. The create_service_account variable default value (true) will cause a cluster-specific service account to be created."
+  default     = ""
 }
 
 variable "basic_auth_username" {

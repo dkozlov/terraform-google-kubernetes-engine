@@ -19,12 +19,7 @@ locals {
 }
 
 provider "google" {
-  version = "~> 2.9.0"
-  region  = var.region
-}
-
-provider "google-beta" {
-  version = "~> 2.9.0"
+  version = "~> 2.12.0"
   region  = var.region
 }
 
@@ -46,9 +41,10 @@ module "gke" {
   network    = var.network
   subnetwork = var.subnetwork
 
-  ip_range_pods     = var.ip_range_pods
-  ip_range_services = var.ip_range_services
-  service_account   = var.compute_engine_service_account
+  ip_range_pods          = var.ip_range_pods
+  ip_range_services      = var.ip_range_services
+  create_service_account = false
+  service_account        = var.compute_engine_service_account
 }
 
 resource "kubernetes_pod" "nginx-example" {

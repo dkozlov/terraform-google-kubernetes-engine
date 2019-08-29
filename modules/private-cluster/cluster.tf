@@ -17,19 +17,18 @@
 // This file was automatically generated from a template in ./autogen
 
 /******************************************
-  Create zonal cluster
+  Create Container Cluster
  *****************************************/
-resource "google_container_cluster" "zonal_primary" {
+resource "google_container_cluster" "primary" {
   provider = google
 
-  count           = var.regional ? 0 : 1
   name            = var.name
   description     = var.description
   project         = var.project_id
   resource_labels = var.cluster_resource_labels
 
-  zone              = var.zones[0]
-  node_locations    = slice(var.zones, 1, length(var.zones))
+  location          = local.location
+  node_locations    = local.node_locations
   cluster_ipv4_cidr = var.cluster_ipv4_cidr
   network           = data.google_compute_network.gke_network.self_link
 
@@ -43,7 +42,7 @@ resource "google_container_cluster" "zonal_primary" {
   }
 
   subnetwork         = data.google_compute_subnetwork.gke_subnetwork.self_link
-  min_master_version = local.kubernetes_version_zonal
+  min_master_version = local.master_version
 
   logging_service    = var.logging_service
   monitoring_service = var.monitoring_service
@@ -88,10 +87,10 @@ resource "google_container_cluster" "zonal_primary" {
     }
   }
 
-  #ip_allocation_policy {
-  #  cluster_secondary_range_name  = var.ip_range_pods
-  #  services_secondary_range_name = var.ip_range_services
-  #}
+  ip_allocation_policy {
+    cluster_secondary_range_name  = var.ip_range_pods
+    services_secondary_range_name = var.ip_range_services
+  }
 
   maintenance_policy {
     daily_maintenance_window {
@@ -118,24 +117,29 @@ resource "google_container_cluster" "zonal_primary" {
     }
   }
 
+  private_cluster_config {
+    enable_private_endpoint = var.enable_private_endpoint
+    enable_private_nodes    = var.enable_private_nodes
+    master_ipv4_cidr_block  = var.master_ipv4_cidr_block
+  }
 
   remove_default_node_pool = var.remove_default_node_pool
 }
 
 /******************************************
-  Create zonal node pools
+  Create Container Cluster node pools
  *****************************************/
-resource "google_container_node_pool" "zonal_pools" {
-  provider = google-beta
-  count    = var.regional ? 0 : length(var.node_pools)
+resource "google_container_node_pool" "pools" {
+  provider = google
+  count    = length(var.node_pools)
   name     = var.node_pools[count.index]["name"]
   project  = var.project_id
-  zone     = var.zones[0]
-  cluster  = google_container_cluster.zonal_primary[0].name
+  location = local.location
+  cluster  = google_container_cluster.primary.name
   version = lookup(var.node_pools[count.index], "auto_upgrade", false) ? "" : lookup(
     var.node_pools[count.index],
     "version",
-    local.node_version_zonal,
+    local.node_version,
   )
   initial_node_count = lookup(
     var.node_pools[count.index],
@@ -143,14 +147,19 @@ resource "google_container_node_pool" "zonal_pools" {
     lookup(var.node_pools[count.index], "min_count", 1),
   )
 
-  autoscaling {
-    min_node_count = lookup(var.node_pools[count.index], "min_count", 1)
-    max_node_count = lookup(var.node_pools[count.index], "max_count", 100)
+  node_count = lookup(var.node_pools[count.index], "autoscaling", true) ? null : lookup(var.node_pools[count.index], "min_count", 1)
+
+  dynamic "autoscaling" {
+    for_each = lookup(var.node_pools[count.index], "autoscaling", true) ? [var.node_pools[count.index]] : []
+    content {
+      min_node_count = lookup(autoscaling.value, "min_count", 1)
+      max_node_count = lookup(autoscaling.value, "max_count", 100)
+    }
   }
 
   management {
     auto_repair  = lookup(var.node_pools[count.index], "auto_repair", true)
-    auto_upgrade = lookup(var.node_pools[count.index], "auto_upgrade", false)
+    auto_upgrade = lookup(var.node_pools[count.index], "auto_upgrade", local.default_auto_upgrade)
   }
 
   node_config {
@@ -179,18 +188,6 @@ resource "google_container_node_pool" "zonal_pools" {
         "disable-legacy-endpoints" = var.disable_legacy_metadata_endpoints
       },
     )
-    dynamic "taint" {
-      for_each = concat(
-        var.node_pools_taints["all"],
-        var.node_pools_taints[var.node_pools[count.index]["name"]],
-      )
-      content {
-        effect = taint.value.effect
-        key    = taint.value.key
-        value  = taint.value.value
-      }
-    }
-
     tags = concat(
       ["gke-${var.name}"],
       ["gke-${var.name}-${var.node_pools[count.index]["name"]}"],
@@ -234,8 +231,7 @@ resource "google_container_node_pool" "zonal_pools" {
   }
 }
 
-resource "null_resource" "wait_for_zonal_cluster" {
-  count = var.regional ? 0 : 1
+resource "null_resource" "wait_for_cluster" {
 
   provisioner "local-exec" {
     command = "${path.module}/scripts/wait-for-cluster.sh ${var.project_id} ${var.name}"
@@ -247,7 +243,7 @@ resource "null_resource" "wait_for_zonal_cluster" {
   }
 
   depends_on = [
-    google_container_cluster.zonal_primary,
-    google_container_node_pool.zonal_pools,
+    google_container_cluster.primary,
+    google_container_node_pool.pools,
   ]
 }

@@ -255,10 +255,22 @@ variable "monitoring_service" {
   default     = "monitoring.googleapis.com"
 }
 
+variable "create_service_account" {
+  type        = bool
+  description = "Defines if service account specified to run nodes should be created."
+  default     = true
+}
+
+variable "grant_registry_access" {
+  type        = bool
+  description = "Grants created cluster-specific service account storage.objectViewer role."
+  default     = false
+}
+
 variable "service_account" {
   type        = string
-  description = "The service account to run nodes as if not overridden in `node_pools`. The default value will cause a cluster-specific service account to be created."
-  default     = "create"
+  description = "The service account to run nodes as if not overridden in `node_pools`. The create_service_account variable default value (true) will cause a cluster-specific service account to be created."
+  default     = ""
 }
 
 variable "basic_auth_username" {
@@ -320,6 +332,11 @@ variable "istio" {
   default     = false
 }
 
+variable "default_max_pods_per_node" {
+  description = "The maximum number of pods to schedule per node"
+  default     = 110
+}
+
 variable "database_encryption" {
   description = "Application-layer Secrets Encryption settings. The object format is {state = string, key_name = string}. Valid values of state are: \"ENCRYPTED\"; \"DECRYPTED\". key_name is the name of a CloudKMS key."
   type        = list(object({ state = string, key_name = string }))
@@ -346,9 +363,21 @@ variable "pod_security_policy_config" {
   }]
 }
 
+variable "resource_usage_export_dataset_id" {
+  type        = string
+  description = "The dataset id for which network egress metering for this cluster will be enabled. If enabled, a daemonset will be created in the cluster to meter network egress traffic."
+  default     = ""
+}
+
 variable "node_metadata" {
   description = "Specifies how node metadata is exposed to the workload running on the node"
   default     = "UNSPECIFIED"
+}
+
+variable "sandbox_enabled" {
+  type        = bool
+  description = "(Beta) Enable GKE Sandbox (Do not forget to set `image_type` = `COS_CONTAINERD` and `node_version` = `1.12.7-gke.17` or later to use it)."
+  default     = false
 }
 
 variable "enable_intranode_visibility" {
@@ -362,3 +391,16 @@ variable "enable_vertical_pod_autoscaling" {
   description = "Vertical Pod Autoscaling automatically adjusts the resources of pods controlled by it"
   default     = false
 }
+
+variable "identity_namespace" {
+  description = "Workload Identity namespace"
+  type        = string
+  default     = ""
+}
+
+variable "authenticator_security_group" {
+  type        = string
+  description = "The name of the RBAC security group for use with Google security groups in Kubernetes RBAC. Group name must be in format gke-security-groups@yourdomain.com"
+  default     = null
+}
+

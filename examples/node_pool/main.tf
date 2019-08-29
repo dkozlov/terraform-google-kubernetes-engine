@@ -18,18 +18,13 @@ locals {
   cluster_type = "node-pool"
 }
 
-provider "google" {
-  version = "~> 2.9.0"
-  region  = var.region
-}
-
 provider "google-beta" {
-  version = "~> 2.9.0"
+  version = "~> 2.12.0"
   region  = var.region
 }
 
 module "gke" {
-  source                            = "../../"
+  source                            = "../../modules/beta-public-cluster/"
   project_id                        = var.project_id
   name                              = "${local.cluster_type}-cluster${var.cluster_name_suffix}"
   regional                          = false
@@ -39,6 +34,7 @@ module "gke" {
   subnetwork                        = var.subnetwork
   ip_range_pods                     = var.ip_range_pods
   ip_range_services                 = var.ip_range_services
+  create_service_account            = false
   remove_default_node_pool          = true
   disable_legacy_metadata_endpoints = false
 
