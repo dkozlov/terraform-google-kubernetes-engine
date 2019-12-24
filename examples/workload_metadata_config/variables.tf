@@ -45,10 +45,9 @@ variable "ip_range_pods" {
 }
 
 variable "ip_range_services" {
-  description = "The secondary ip range to use for pods"
+  description = "The secondary ip range to use for services"
 }
 
-variable "compute_engine_service_account" {
-  description = "Service account to associate to the nodes in the cluster"
+variable "registry_project_id" {
+  description = "Project name for the GCR registry"
 }
-

@@ -15,7 +15,7 @@
  */
 
 output "project_id" {
-  value = var.project_id
+  value = module.example.project_id
 }
 
 output "region" {
@@ -79,3 +79,6 @@ output "service_account" {
   value       = module.example.service_account
 }
 
+output "registry_project_id" {
+  value = var.registry_project_id
+}

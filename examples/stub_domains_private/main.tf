@@ -15,12 +15,8 @@
  */
 
 provider "google" {
-  version = "~> 2.12.0"
+  version = "~> 2.18.0"
   region  = var.region
-}
-
-provider "random" {
-  version = "~> 2.1"
 }
 
 data "google_compute_subnetwork" "subnetwork" {
@@ -44,20 +40,15 @@ module "gke" {
   enable_private_endpoint       = false
   enable_private_nodes          = true
 
-  master_authorized_networks_config = [
+  master_authorized_networks = [
     {
-      cidr_blocks = [
-        {
-          cidr_block   = data.google_compute_subnetwork.subnetwork.ip_cidr_range
-          display_name = "VPC"
-        },
-      ]
+      cidr_block   = data.google_compute_subnetwork.subnetwork.ip_cidr_range
+      display_name = "VPC"
     },
   ]
 
   master_ipv4_cidr_block = "172.16.0.0/28"
 
-  network_policy         = true
   create_service_account = false
   service_account        = var.compute_engine_service_account
 

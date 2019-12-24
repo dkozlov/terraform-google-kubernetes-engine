@@ -40,7 +40,8 @@ variable "regional" {
 
 variable "region" {
   type        = string
-  description = "The region to host the cluster in (required)"
+  description = "The region to host the cluster in (optional if zonal cluster / required if regional)"
+  default     = null
 }
 
 variable "zones" {
@@ -77,9 +78,9 @@ variable "node_version" {
   default     = ""
 }
 
-variable "master_authorized_networks_config" {
-  type        = list(object({ cidr_blocks = list(object({ cidr_block = string, display_name = string })) }))
-  description = "The desired configuration options for master authorized networks. The object format is {cidr_blocks = list(object({cidr_block = string, display_name = string}))}. Omit the nested cidr_blocks attribute to disallow external access (except the cluster node IPs, which GKE automatically whitelists)."
+variable "master_authorized_networks" {
+  type        = list(object({ cidr_block = string, display_name = string }))
+  description = "List of master authorized networks. If none are provided, disallow external access (except the cluster node IPs, which GKE automatically whitelists)."
   default     = []
 }
 
@@ -95,16 +96,10 @@ variable "http_load_balancing" {
   default     = true
 }
 
-variable "kubernetes_dashboard" {
-  type        = bool
-  description = "Enable kubernetes dashboard addon"
-  default     = false
-}
-
 variable "network_policy" {
   type        = bool
   description = "Enable network policy addon"
-  default     = false
+  default     = true
 }
 
 variable "network_policy_provider" {
@@ -162,6 +157,7 @@ variable "node_pools_labels" {
   type        = map(map(string))
   description = "Map of maps containing node labels by node-pool name"
 
+  # Default is being set in variables_defaults.tf
   default = {
     all               = {}
     default-node-pool = {}
@@ -172,16 +168,17 @@ variable "node_pools_metadata" {
   type        = map(map(string))
   description = "Map of maps containing node metadata by node-pool name"
 
+  # Default is being set in variables_defaults.tf
   default = {
     all               = {}
     default-node-pool = {}
   }
 }
-
 variable "node_pools_tags" {
   type        = map(list(string))
   description = "Map of lists containing node network tags by node-pool name"
 
+  # Default is being set in variables_defaults.tf
   default = {
     all               = []
     default-node-pool = []
@@ -192,6 +189,7 @@ variable "node_pools_oauth_scopes" {
   type        = map(list(string))
   description = "Map of lists containing node oauth scopes by node-pool name"
 
+  # Default is being set in variables_defaults.tf
   default = {
     all               = ["https://www.googleapis.com/auth/cloud-platform"]
     default-node-pool = []
@@ -205,7 +203,7 @@ variable "stub_domains" {
 }
 
 variable "upstream_nameservers" {
-  type        = "list"
+  type        = list(string)
   description = "If specified, the values replace the nameservers taken by default from the node’s /etc/resolv.conf"
   default     = []
 }
@@ -257,6 +255,12 @@ variable "grant_registry_access" {
   default     = false
 }
 
+variable "registry_project_id" {
+  type        = string
+  description = "Project holding the Google Container Registry. If empty, we use the cluster project. If grant_registry_access is true, storage.objectViewer role is assigned on this project."
+  default     = ""
+}
+
 variable "service_account" {
   type        = string
   description = "The service account to run nodes as if not overridden in `node_pools`. The create_service_account variable default value (true) will cause a cluster-specific service account to be created."
@@ -292,3 +296,8 @@ variable "cluster_resource_labels" {
   default     = {}
 }
 
+variable "skip_provisioners" {
+  type        = bool
+  description = "Flag to skip all local-exec provisioners. It breaks `stub_domains` and `upstream_nameservers` variables functionality."
+  default     = false
+}

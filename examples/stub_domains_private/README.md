@@ -17,7 +17,7 @@ It will:
 | cluster\_name\_suffix | A suffix to append to the default cluster name | string | `""` | no |
 | compute\_engine\_service\_account | Service account to associate to the nodes in the cluster | string | n/a | yes |
 | ip\_range\_pods | The secondary ip range to use for pods | string | n/a | yes |
-| ip\_range\_services | The secondary ip range to use for pods | string | n/a | yes |
+| ip\_range\_services | The secondary ip range to use for services | string | n/a | yes |
 | network | The VPC network to host the cluster in | string | n/a | yes |
 | project\_id | The project ID to host the cluster in | string | n/a | yes |
 | region | The region to host the cluster in | string | n/a | yes |
@@ -38,7 +38,7 @@ It will:
 | network |  |
 | project\_id |  |
 | region |  |
-| service\_account | The service account to default running nodes as if not overridden in `node_pools`. |
+| service\_account | The default service account used for running nodes. |
 | subnetwork |  |
 | zones | List of zones in which the cluster resides |
 

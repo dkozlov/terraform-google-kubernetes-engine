@@ -1,10 +1,10 @@
-# Copyright 2018 Google LLC
+# Copyright 2019 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#      http://www.apache.org/licenses/LICENSE-2.0
+#     https://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,7 +24,7 @@ control "gcp" do
     service_account_name = "projects/#{project_id}/serviceAccounts/#{service_account}"
   end
 
-  describe google_service_account name: service_account_name do
+  describe google_service_account(name: service_account_name) do
     its("display_name") { should eq "Terraform-managed service account for cluster #{attribute("cluster_name")}" }
     its("project_id") { should eq project_id }
   end
