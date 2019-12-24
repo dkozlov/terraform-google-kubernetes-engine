@@ -69,7 +69,7 @@ resource "google_container_cluster" "primary" {
 
   enable_binary_authorization = var.enable_binary_authorization
   enable_intranode_visibility = var.enable_intranode_visibility
-  default_max_pods_per_node   = var.default_max_pods_per_node
+  #default_max_pods_per_node   = var.default_max_pods_per_node
   enable_shielded_nodes       = var.enable_shielded_nodes
 
   vertical_pod_autoscaling {
